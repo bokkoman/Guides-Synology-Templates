@@ -245,6 +245,23 @@ get_app_compose() {
     fi
 }
 
+create_vpn_tun() {
+    # Create the necessary file structure for vpn tunnel device
+    # Thanks @Gabe
+    if [ ! -c /dev/net/tun ]; then
+        if [ ! -d /dev/net ]; then
+            mkdir -m 755 /dev/net
+        fi
+        mknod /dev/net/tun c 10 200
+        chmod 0755 /dev/net/tun
+    fi
+
+    # Load the tun module if not already loaded
+    if ( ! (lsmod | grep -q "^tun\s")); then
+        insmod /lib/modules/tun.ko
+    fi
+}
+
 PS3=$'\n'"Please select from the options: "
 options=("torrents" "usenet" "both")
 printf '\n%s\n\n' "Select your preferred download method."
@@ -254,37 +271,14 @@ select opt in "${options[@]}"; do
             printf '\n%s\n' "You chose torrents, creating data directories..."
             mkdir -p "${mkdir_torrents[@]}"
             printf '\n%s\n\n' "Choose your torrent client:"
-            options=("qbittorrent" "qbittorrentvpn" "deluge" "delugevpn" "rtorrentvpn")
+            options=("qbittorrentvpn")
             select opt in "${options[@]}"; do
                 case $opt in
-                    "qbittorrent")
-                        printf '\n%s\n\n' "You picked Qbittorrent"
-                        get_app_compose "$opt"
-                        mkdir -p "$docker_conf_dir/appdata/$opt"
-                        break
-                        ;;
                     "qbittorrentvpn")
                         printf '\n%s\n\n' "You picked Qbittorrent with VPN"
                         get_app_compose "$opt"
                         mkdir -p "$docker_conf_dir/appdata/$opt"
-                        break
-                        ;;
-                    "deluge")
-                        printf '\n%s\n\n' "You picked Deluge"
-                        get_app_compose "$opt"
-                        mkdir -p "$docker_conf_dir/appdata/$opt"
-                        break
-                        ;;
-                    "delugevpn")
-                        printf '\n%s\n\n' "You picked Deluge with VPN"
-                        get_app_compose "$opt"
-                        mkdir -p "$docker_conf_dir/appdata/$opt"
-                        break
-                        ;;
-                    "rtorrentvpn")
-                        printf '\n%s\n\n' "You picked rTorrent with VPN"
-                        get_app_compose "$opt"
-                        mkdir -p "$docker_conf_dir/appdata/$opt"
+                        create_vpn_tun
                         break
                         ;;
                     *)
@@ -321,38 +315,15 @@ select opt in "${options[@]}"; do
             mkdir -p "${mkdir_usenet[@]}" "${mkdir_torrents[@]}"
 
             printf '\n%s\n\n' "Choose your torrent client:"
-            options=("qbittorrent" "qbittorrentvpn" "deluge" "delugevpn" "rtorrentvpn")
+            options=("qbittorrentvpn")
 
             select opt in "${options[@]}"; do
                 case $opt in
-                    "qbittorrent")
-                        printf '\n%s\n\n' "You picked Qbittorrent"
-                        get_app_compose "$opt"
-                        mkdir -p "$docker_conf_dir/appdata/$opt"
-                        break
-                        ;;
                     "qbittorrentvpn")
                         printf '\n%s\n\n' "You picked Qbittorrent with VPN"
                         get_app_compose "$opt"
                         mkdir -p "$docker_conf_dir/appdata/$opt"
-                        break
-                        ;;
-                    "deluge")
-                        printf '\n%s\n\n' "You picked Deluge"
-                        get_app_compose "$opt"
-                        mkdir -p "$docker_conf_dir/appdata/$opt"
-                        break
-                        ;;
-                    "delugevpn")
-                        printf '\n%s\n\n' "You picked Deluge with VPN"
-                        get_app_compose "$opt"
-                        mkdir -p "$docker_conf_dir/appdata/$opt"
-                        break
-                        ;;
-                    "rtorrentvpn")
-                        printf '\n%s\n\n' "You picked rTorrent with VPN"
-                        get_app_compose "$opt"
-                        mkdir -p "$docker_conf_dir/appdata/$opt"
+                        create_vpn_tun
                         break
                         ;;
                     *) printf '\n%s\n\n' "invalid option $REPLY" ;;
